@@ -1,0 +1,116 @@
+import java.util.*;
+
+class InvalidBookingException extends Exception {
+    public InvalidBookingException(String message) {
+        super(message);
+    }
+}
+
+class Reservation {
+    private String guestName;
+    private String roomType;
+    private int nights;
+
+    public Reservation(String guestName, String roomType, int nights) {
+        this.guestName = guestName;
+        this.roomType = roomType;
+        this.nights = nights;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public int getNights() {
+        return nights;
+    }
+}
+
+class InventoryService {
+    private Map<String, Integer> inventory = new HashMap<>();
+
+    public void addRoomType(String type, int count) {
+        inventory.put(type, count);
+    }
+
+    public boolean isValidRoomType(String type) {
+        return inventory.containsKey(type);
+    }
+
+    public boolean isAvailable(String type) {
+        return inventory.getOrDefault(type, 0) > 0;
+    }
+
+    public void decrement(String type) throws InvalidBookingException {
+        int count = inventory.getOrDefault(type, 0);
+        if (count <= 0) {
+            throw new InvalidBookingException("No available rooms for type: " + type);
+        }
+        inventory.put(type, count - 1);
+    }
+}
+
+class BookingValidator {
+    private InventoryService inventoryService;
+
+    public BookingValidator(InventoryService inventoryService) {
+        this.inventoryService = inventoryService;
+    }
+
+    public void validate(Reservation reservation) throws InvalidBookingException {
+        if (reservation.getGuestName() == null || reservation.getGuestName().isEmpty()) {
+            throw new InvalidBookingException("Guest name cannot be empty");
+        }
+
+        if (!inventoryService.isValidRoomType(reservation.getRoomType())) {
+            throw new InvalidBookingException("Invalid room type: " + reservation.getRoomType());
+        }
+
+        if (reservation.getNights() <= 0) {
+            throw new InvalidBookingException("Nights must be greater than zero");
+        }
+
+        if (!inventoryService.isAvailable(reservation.getRoomType())) {
+            throw new InvalidBookingException("Room not available for type: " + reservation.getRoomType());
+        }
+    }
+}
+
+class BookingService {
+    private InventoryService inventoryService;
+    private BookingValidator validator;
+
+    public BookingService(InventoryService inventoryService) {
+        this.inventoryService = inventoryService;
+        this.validator = new BookingValidator(inventoryService);
+    }
+
+    public void confirmBooking(Reservation reservation) {
+        try {
+            validator.validate(reservation);
+            inventoryService.decrement(reservation.getRoomType());
+            System.out.println("Booking confirmed for " + reservation.getGuestName());
+        } catch (InvalidBookingException e) {
+            System.out.println("Booking failed: " + e.getMessage());
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        InventoryService inventory = new InventoryService();
+        inventory.addRoomType("Deluxe", 1);
+        inventory.addRoomType("Suite", 0);
+
+        BookingService bookingService = new BookingService(inventory);
+
+        bookingService.confirmBooking(new Reservation("Ayush", "Deluxe", 2));
+        bookingService.confirmBooking(new Reservation("", "Suite", 1));
+        bookingService.confirmBooking(new Reservation("Rohit", "Suite", 1));
+        bookingService.confirmBooking(new Reservation("Neha", "InvalidType", 1));
+    }
+}
