@@ -1,0 +1,99 @@
+abstract class Room {
+ 
+    private String roomNumber;
+    private int numberOfBeds;
+    private double roomSizeInSqFt;
+    private double pricePerNight;
+ 
+    public Room(String roomNumber, int numberOfBeds, double roomSizeInSqFt, double pricePerNight) {
+        this.roomNumber = roomNumber;
+        this.numberOfBeds = numberOfBeds;
+        this.roomSizeInSqFt = roomSizeInSqFt;
+        this.pricePerNight = pricePerNight;
+    }
+ 
+    public abstract String getRoomType();
+ 
+    public String getRoomNumber() { return roomNumber; }
+    public int getNumberOfBeds() { return numberOfBeds; }
+    public double getRoomSizeInSqFt() { return roomSizeInSqFt; }
+    public double getPricePerNight() { return pricePerNight; }
+ 
+    public void displayRoomDetails() {
+        System.out.println("--------------------------------------------");
+        System.out.println("  Room Type    : " + getRoomType());
+        System.out.println("  Room Number  : " + roomNumber);
+        System.out.println("  Beds         : " + numberOfBeds);
+        System.out.println("  Size         : " + roomSizeInSqFt + " sq ft");
+        System.out.println("  Price/Night  : $" + pricePerNight);
+    }
+}
+ 
+class SingleRoom extends Room {
+ 
+    public SingleRoom(String roomNumber) {
+        super(roomNumber, 1, 220.0, 89.99);
+    }
+ 
+    @Override
+    public String getRoomType() {
+        return "Single Room";
+    }
+}
+ 
+class DoubleRoom extends Room {
+ 
+    public DoubleRoom(String roomNumber) {
+        super(roomNumber, 2, 340.0, 139.99);
+    }
+ 
+    @Override
+    public String getRoomType() {
+        return "Double Room";
+    }
+}
+ 
+class SuiteRoom extends Room {
+ 
+    public SuiteRoom(String roomNumber) {
+        super(roomNumber, 3, 680.0, 299.99);
+    }
+ 
+    @Override
+    public String getRoomType() {
+        return "Suite Room";
+    }
+}
+ 
+public class HotelBookingApp {
+ 
+    public static void main(String[] args) {
+ 
+        Room singleRoom = new SingleRoom("101");
+        Room doubleRoom = new DoubleRoom("201");
+        Room suiteRoom  = new SuiteRoom("301");
+ 
+        boolean isSingleRoomAvailable = true;
+        boolean isDoubleRoomAvailable = false;
+        boolean isSuiteRoomAvailable  = true;
+ 
+        System.out.println("============================================");
+        System.out.println("       Hotel Booking System v1.0           ");
+        System.out.println("         Room Availability Report          ");
+        System.out.println("============================================");
+ 
+        singleRoom.displayRoomDetails();
+        System.out.println("  Availability : " + (isSingleRoomAvailable ? "Available" : "Not Available"));
+ 
+        doubleRoom.displayRoomDetails();
+        System.out.println("  Availability : " + (isDoubleRoomAvailable ? "Available" : "Not Available"));
+ 
+        suiteRoom.displayRoomDetails();
+        System.out.println("  Availability : " + (isSuiteRoomAvailable ? "Available" : "Not Available"));
+ 
+        System.out.println("--------------------------------------------");
+        System.out.println("  Report generated successfully.");
+        System.out.println("============================================");
+    }
+}
+ 
