@@ -1,0 +1,102 @@
+import java.util.*;
+
+class Reservation {
+    private String reservationId;
+    private String guestName;
+    private String roomType;
+
+    public Reservation(String reservationId, String guestName, String roomType) {
+        this.reservationId = reservationId;
+        this.guestName = guestName;
+        this.roomType = roomType;
+    }
+
+    public String getReservationId() {
+        return reservationId;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+}
+
+class InventoryService {
+    private Map<String, Integer> inventory = new HashMap<>();
+
+    public void addRoomType(String type, int count) {
+        inventory.put(type, count);
+    }
+
+    public void increment(String type) {
+        inventory.put(type, inventory.getOrDefault(type, 0) + 1);
+    }
+
+    public void decrement(String type) {
+        inventory.put(type, inventory.get(type) - 1);
+    }
+}
+
+class BookingHistory {
+    private Map<String, Reservation> confirmed = new HashMap<>();
+
+    public void addReservation(Reservation r) {
+        confirmed.put(r.getReservationId(), r);
+    }
+
+    public Reservation getReservation(String id) {
+        return confirmed.get(id);
+    }
+
+    public void removeReservation(String id) {
+        confirmed.remove(id);
+    }
+}
+
+class CancellationService {
+    private InventoryService inventoryService;
+    private BookingHistory history;
+    private Stack<String> rollbackStack = new Stack<>();
+
+    public CancellationService(InventoryService inventoryService, BookingHistory history) {
+        this.inventoryService = inventoryService;
+        this.history = history;
+    }
+
+    public void cancel(String reservationId) {
+        Reservation reservation = history.getReservation(reservationId);
+
+        if (reservation == null) {
+            System.out.println("Cancellation failed: Reservation not found");
+            return;
+        }
+
+        rollbackStack.push(reservationId);
+
+        inventoryService.increment(reservation.getRoomType());
+
+        history.removeReservation(reservationId);
+
+        System.out.println("Cancelled: " + reservationId);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        InventoryService inventory = new InventoryService();
+        inventory.addRoomType("Deluxe", 0);
+
+        BookingHistory history = new BookingHistory();
+
+        Reservation r1 = new Reservation("DEL123", "Ayush", "Deluxe");
+        history.addReservation(r1);
+
+        CancellationService cancellationService = new CancellationService(inventory, history);
+
+        cancellationService.cancel("DEL123");
+        cancellationService.cancel("DEL999");
+    }
+}
