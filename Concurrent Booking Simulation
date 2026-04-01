@@ -1,0 +1,104 @@
+import java.util.*;
+
+class Reservation {
+    private String guestName;
+    private String roomType;
+
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+}
+
+class BookingQueue {
+    private Queue<Reservation> queue = new LinkedList<>();
+
+    public synchronized void addRequest(Reservation r) {
+        queue.offer(r);
+    }
+
+    public synchronized Reservation getNextRequest() {
+        return queue.poll();
+    }
+}
+
+class InventoryService {
+    private Map<String, Integer> inventory = new HashMap<>();
+
+    public synchronized void addRoomType(String type, int count) {
+        inventory.put(type, count);
+    }
+
+    public synchronized boolean isAvailable(String type) {
+        return inventory.getOrDefault(type, 0) > 0;
+    }
+
+    public synchronized boolean allocate(String type) {
+        int count = inventory.getOrDefault(type, 0);
+        if (count <= 0) return false;
+        inventory.put(type, count - 1);
+        return true;
+    }
+}
+
+class BookingProcessor implements Runnable {
+    private BookingQueue queue;
+    private InventoryService inventory;
+
+    public BookingProcessor(BookingQueue queue, InventoryService inventory) {
+        this.queue = queue;
+        this.inventory = inventory;
+    }
+
+    public void run() {
+        while (true) {
+            Reservation r;
+            synchronized (queue) {
+                r = queue.getNextRequest();
+            }
+
+            if (r == null) break;
+
+            synchronized (inventory) {
+                if (inventory.allocate(r.getRoomType())) {
+                    System.out.println(Thread.currentThread().getName() +
+                            " confirmed booking for " + r.getGuestName());
+                } else {
+                    System.out.println(Thread.currentThread().getName() +
+                            " failed booking for " + r.getGuestName());
+                }
+            }
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) throws InterruptedException {
+        BookingQueue queue = new BookingQueue();
+        InventoryService inventory = new InventoryService();
+
+        inventory.addRoomType("Deluxe", 2);
+
+        queue.addRequest(new Reservation("Ayush", "Deluxe"));
+        queue.addRequest(new Reservation("Rohit", "Deluxe"));
+        queue.addRequest(new Reservation("Neha", "Deluxe"));
+        queue.addRequest(new Reservation("Karan", "Deluxe"));
+
+        Thread t1 = new Thread(new BookingProcessor(queue, inventory), "Thread-1");
+        Thread t2 = new Thread(new BookingProcessor(queue, inventory), "Thread-2");
+
+        t1.start();
+        t2.start();
+
+        t1.join();
+        t2.join();
+    }
+}
